@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">UTHCARE</string>
+    <string name="register_button">ĐĂNG KÍ</string>
+    <string name="name_hint">Tên của bạn</string>
+    <string name="email_hint">Email của bạn</string>
+    <string name="password_hint">Mật khẩu</string>
+    <string name="confirm_password_hint">Nhập lại mật khẩu</string>
+    <string name="login_link">Đã có tài khoản? Đăng Nhập</string>
+</resources>
