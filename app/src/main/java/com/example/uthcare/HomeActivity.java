@@ -27,7 +27,7 @@ public class HomeActivity extends AppCompatActivity {
     private ProductAdapter productAdapter;
     private List<Product> productList = new ArrayList<>();
 
-    private static final String PRODUCT_URL = "http://192.168.1.4:3000/products";
+    private static final String PRODUCT_URL = "http://192.168.1.3:3000/products";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +38,6 @@ public class HomeActivity extends AppCompatActivity {
         etSearch = findViewById(R.id.et_search);
         btnCart = findViewById(R.id.btn_cart);
         tvUsername = findViewById(R.id.tv_username);
-        rvCategories = findViewById(R.id.rv_categories);
         rvProducts = findViewById(R.id.rv_products);
 
         // Hiển thị tên người dùng từ SharedPreferences
@@ -72,16 +71,33 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void setupCategoryRecycler() {
+        TextView tvCategorySelector = findViewById(R.id.tvCategorySelector);
+
         List<String> categories = Arrays.asList(
+                "Trang Chủ",
                 "Thuốc",
                 "Thực phẩm bảo vệ sức khỏe",
                 "Chăm sóc cá nhân",
                 "Chăm sóc sắc đẹp"
         );
 
-        CategoryAdapter adapter = new CategoryAdapter(categories, selectedCategory -> filterProductsByCategory(selectedCategory));
-        rvCategories.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        rvCategories.setAdapter(adapter);
+
+        tvCategorySelector.setOnClickListener(view -> {
+            PopupMenu popupMenu = new PopupMenu(this, view);
+            for (int i = 0; i < categories.size(); i++) {
+                popupMenu.getMenu().add(0, i, i, categories.get(i));
+            }
+
+            popupMenu.setOnMenuItemClickListener(item -> {
+                String selectedCategory = categories.get(item.getItemId());
+                tvCategorySelector.setText(selectedCategory); // hoặc hiển thị lại tên
+                filterProductsByCategory(selectedCategory);   // lọc sản phẩm
+                return true;
+            });
+
+            popupMenu.show();
+        });
+
     }
 
     private void loadAllProducts() {

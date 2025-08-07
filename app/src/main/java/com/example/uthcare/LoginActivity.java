@@ -18,7 +18,7 @@ public class LoginActivity extends AppCompatActivity {
     private TextView tvErrorMessage, tvRegisterLink;
     private Button btnLogin;
 
-    String LOGIN_URL = "http://192.168.1.4:3000/login"; // Đổi theo IP server của bạn
+    String LOGIN_URL = "http://192.168.1.3:3000/login"; // Đổi theo IP server của bạn
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

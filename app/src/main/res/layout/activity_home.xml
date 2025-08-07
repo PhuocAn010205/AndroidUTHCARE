@@ -47,12 +47,17 @@
         android:layout_marginBottom="12dp"/>
 
     <!-- Danh mục -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_categories"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginBottom="12dp"
-        android:orientation="horizontal"/>
+    <!-- layout XML -->
+    <TextView
+        android:id="@+id/tvCategorySelector"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chọn danh mục"
+        android:drawableEnd="@drawable/ic_arrow_drop_down"
+        android:padding="8dp"
+        android:textSize="16sp"
+        />
+
 
     <!-- Danh sách sản phẩm -->
     <androidx.recyclerview.widget.RecyclerView

@@ -1,6 +1,7 @@
 package com.example.uthcare;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,10 +10,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 
 import java.text.NumberFormat;
 import java.util.List;
@@ -20,11 +27,8 @@ import java.util.Locale;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder> {
 
-    private Context context;
+    private final Context context;
     private List<Product> productList;
-
-    // 👉 Đổi base URL tại đây khi chạy trên device thật (192.168.x.x) hoặc emulator (10.0.2.2)
-    private static final String BASE_URL = "http://192.168.1.4:3000"; // Nếu dùng emulator Android
 
     public ProductAdapter(Context context, List<Product> productList) {
         this.context = context;
@@ -32,7 +36,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     }
 
     public void updateList(List<Product> newList) {
-        productList = newList;
+        this.productList = newList;
         notifyDataSetChanged();
     }
 
@@ -49,37 +53,47 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
 
         holder.tvName.setText(product.getProductName());
 
-        // Format tiền theo locale Việt Nam
+        // Format tiền VNĐ
         NumberFormat formatter = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
         String formattedPrice = formatter.format(product.getPrice()) + " đ";
         holder.tvPrice.setText(formattedPrice);
 
-        // Xử lý ảnh
+        // Lấy URL ảnh
         String imageUrl = product.getThumbnailUrl();
+        Log.d("ImageDebug", "Loading image: " + imageUrl);
 
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            // Nếu chỉ là đường dẫn (bắt đầu bằng /), thì nối với BASE_URL
-            if (!imageUrl.startsWith("http")) {
-                imageUrl = BASE_URL + imageUrl;
-            }
+        // Option cho Glide
+        RequestOptions requestOptions = new RequestOptions()
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.image_error)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .fitCenter();
 
-            Log.d("ImageDebug", "Loading image: " + imageUrl);
+        // Load ảnh với Glide và listener để bắt lỗi
+        Glide.with(context)
+                .load(imageUrl)
+                .apply(requestOptions)
+                .listener(new RequestListener<Drawable>() {
+                    @Override
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model,
+                                                Target<Drawable> target, boolean isFirstResource) {
+                        Log.e("ImageDebug", "Load failed for: " + imageUrl, e);
+                        return false; // cho phép Glide hiển thị ảnh lỗi mặc định
+                    }
 
-            Glide.with(context)
-                    .load(imageUrl)
-//                    .placeholder(R.drawable.placeholder)
-//                    .error(R.drawable.image_error)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .into(holder.imgThumb);
-        } else {
-            Log.w("ImageDebug", "Image URL is null or empty");
-            holder.imgThumb.setImageResource(R.drawable.image_error);
-        }
+                    @Override
+                    public boolean onResourceReady(Drawable resource, Object model,
+                                                   Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        Log.d("ImageDebug", "Loaded image successfully: " + imageUrl);
+                        return false;
+                    }
+                })
+                .into(holder.imgThumb);
     }
 
     @Override
     public int getItemCount() {
-        return productList.size();
+        return productList != null ? productList.size() : 0;
     }
 
     public static class ProductViewHolder extends RecyclerView.ViewHolder {

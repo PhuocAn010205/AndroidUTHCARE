@@ -7,8 +7,8 @@ public class Product {
     private String thumbnailUrl;
     private String category;
 
-    // URL gốc server – bạn có thể đổi nếu server chạy trên địa chỉ khác
-    private static final String BASE_URL = "http://192.168.1.4:3000";
+    // URL server – nhớ đổi đúng IP khi chạy trên thiết bị thật
+    private static final String BASE_URL = "http://192.168.1.3:3000";
 
     public Product(int productId, String productName, double price, String thumbnailUrl, String category) {
         this.productId = productId;
@@ -30,31 +30,33 @@ public class Product {
         return price;
     }
 
-    /**
-     * Trả về đường dẫn ảnh đầy đủ, ví dụ:
-     * http://192.168.1.4:3000/uploads/thumbnailUrl
-     */
-
-
-    public String getThumbnailUrl() {
-        String BASE_URL = "http://192.168.1.4:3000"; // Cập nhật đúng IP
-        if (thumbnailUrl == null) return "";
-
-        if (thumbnailUrl.startsWith("http")) {
-            return thumbnailUrl;
-        }
-
-        // Đảm bảo không bị lỗi //uploads/uploads
-        if (!thumbnailUrl.startsWith("/uploads")) {
-            thumbnailUrl = "/uploads/" + thumbnailUrl;
-        }
-
-        return BASE_URL + thumbnailUrl;
-    }
-
-
-
     public String getCategory() {
         return category;
+    }
+
+    /**
+     * Trả về URL ảnh đầy đủ, ví dụ:
+     * http://192.168.1.5:3000/uploads/thumbnail-xxx.jpg
+     */
+    public String getThumbnailUrl() {
+        if (thumbnailUrl == null || thumbnailUrl.trim().isEmpty()) {
+            return "";  // Không có ảnh
+        }
+
+        String fullPath;
+
+        if (thumbnailUrl.startsWith("http://") || thumbnailUrl.startsWith("https://")) {
+            fullPath = thumbnailUrl;
+        } else {
+            // Bảo đảm đường dẫn bắt đầu bằng /uploads
+            if (!thumbnailUrl.startsWith("/uploads/")) {
+                thumbnailUrl = "/uploads/" + thumbnailUrl;
+            }
+            fullPath = BASE_URL + thumbnailUrl;
+        }
+
+
+
+        return fullPath;
     }
 }
