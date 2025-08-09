@@ -1,4 +1,3 @@
-// tạo khoảng cách giữa cách item product;
 package com.example.uthcare;
 
 import android.graphics.Rect;
@@ -18,22 +17,22 @@ public class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
 
     @Override
     public void getItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state) {
-        int position = parent.getChildAdapterPosition(view); // item position
-        int column = position % spanCount; // item column
+        int position = parent.getChildAdapterPosition(view);
+        int column = position % spanCount;
 
         if (includeEdge) {
             outRect.left = spacing - column * spacing / spanCount;
             outRect.right = (column + 1) * spacing / spanCount;
 
-            if (position < spanCount) { // top edge
+            if (position < spanCount) {
                 outRect.top = spacing;
             }
-            outRect.bottom = spacing; // item bottom
+            outRect.bottom = spacing;
         } else {
             outRect.left = column * spacing / spanCount;
             outRect.right = spacing - (column + 1) * spacing / spanCount;
             if (position >= spanCount) {
-                outRect.top = spacing; // item top
+                outRect.top = spacing;
             }
         }
     }

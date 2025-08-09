@@ -3,11 +3,11 @@ package com.example.uthcare;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
@@ -19,15 +19,14 @@ import java.util.*;
 
 public class HomeActivity extends AppCompatActivity {
 
+    private static final String TAG = "HomeActivity";
     private EditText etSearch;
     private ImageButton btnCart;
     private TextView tvUsername;
     private RecyclerView rvCategories, rvProducts;
-
     private ProductAdapter productAdapter;
     private List<Product> productList = new ArrayList<>();
-
-    private static final String PRODUCT_URL = "http://192.168.1.3:3000/products";
+    private static final String PRODUCT_URL = "http://192.168.1.5:3000/products";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,13 +49,13 @@ public class HomeActivity extends AppCompatActivity {
 
         // Tải toàn bộ sản phẩm
         loadAllProducts();
-        int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.grid_spacing); // ví dụ 8dp
+        int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.grid_spacing);
         rvProducts.addItemDecoration(new GridSpacingItemDecoration(2, spacingInPixels, true));
 
-
-        // Bấm giỏ hàng (sau này mở CartActivity nếu có)
+        // Bấm giỏ hàng
         btnCart.setOnClickListener(v -> {
-            Toast.makeText(this, "Chức năng giỏ hàng chưa được cài đặt", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(HomeActivity.this, CartActivity.class);
+            startActivity(intent);
         });
 
         // Tìm kiếm sản phẩm theo tên
@@ -72,7 +71,6 @@ public class HomeActivity extends AppCompatActivity {
 
     private void setupCategoryRecycler() {
         TextView tvCategorySelector = findViewById(R.id.tvCategorySelector);
-
         List<String> categories = Arrays.asList(
                 "Trang Chủ",
                 "Thuốc",
@@ -80,7 +78,6 @@ public class HomeActivity extends AppCompatActivity {
                 "Chăm sóc cá nhân",
                 "Chăm sóc sắc đẹp"
         );
-
 
         tvCategorySelector.setOnClickListener(view -> {
             PopupMenu popupMenu = new PopupMenu(this, view);
@@ -90,14 +87,17 @@ public class HomeActivity extends AppCompatActivity {
 
             popupMenu.setOnMenuItemClickListener(item -> {
                 String selectedCategory = categories.get(item.getItemId());
-                tvCategorySelector.setText(selectedCategory); // hoặc hiển thị lại tên
-                filterProductsByCategory(selectedCategory);   // lọc sản phẩm
+                tvCategorySelector.setText(selectedCategory);
+                if (selectedCategory.equals("Trang Chủ")) {
+                    productAdapter.updateList(productList);
+                } else {
+                    filterProductsByCategory(selectedCategory);
+                }
                 return true;
             });
 
             popupMenu.show();
         });
-
     }
 
     private void loadAllProducts() {
@@ -107,23 +107,44 @@ public class HomeActivity extends AppCompatActivity {
                         productList.clear();
                         for (int i = 0; i < response.length(); i++) {
                             JSONObject obj = response.getJSONObject(i);
+                            Log.d(TAG, "Raw JSON: " + obj.toString()); // Debug toàn bộ JSON
+                            String description = obj.optString("description", "Không có mô tả");
+                            Log.d(TAG, "Extracted description: " + description); // Debug giá trị description
                             Product product = new Product(
                                     obj.getInt("product_id"),
                                     obj.getString("product_name"),
                                     obj.getDouble("current_price"),
                                     obj.optString("thumbnail_url"),
-                                    obj.getString("category")
+                                    obj.getString("category"),
+                                    description // Gán trực tiếp để kiểm tra
                             );
                             productList.add(product);
                         }
                         productAdapter = new ProductAdapter(HomeActivity.this, productList);
                         rvProducts.setLayoutManager(new GridLayoutManager(this, 2));
                         rvProducts.setAdapter(productAdapter);
+
+                        productAdapter.setOnItemClickListener(product -> {
+                            Intent intent = new Intent(HomeActivity.this, ProductDetailActivity.class);
+                            intent.putExtra("name", product.getProductName());
+                            intent.putExtra("price", product.getPrice());
+                            intent.putExtra("category", product.getCategory());
+                            intent.putExtra("imageUrl", product.getThumbnailUrl());
+                            intent.putExtra("productId", product.getProductId());
+                            intent.putExtra("description", product.getDescription());
+                            startActivity(intent);
+                            Log.d(TAG, "Description sent: " + product.getDescription()); // Debug trước khi gửi
+                        });
+
                     } catch (JSONException e) {
-                        Toast.makeText(this, "Lỗi phân tích dữ liệu", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Error parsing JSON", e);
+                        Toast.makeText(this, "Lỗi phân tích dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Toast.makeText(this, "Không thể tải sản phẩm", Toast.LENGTH_SHORT).show()
+                error -> {
+                    Log.e(TAG, "Error loading products", error);
+                    Toast.makeText(this, "Không thể tải sản phẩm: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                }
         );
 
         Volley.newRequestQueue(this).add(request);

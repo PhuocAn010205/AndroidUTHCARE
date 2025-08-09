@@ -1,6 +1,7 @@
 package com.example.uthcare;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -8,11 +9,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -20,19 +19,29 @@ import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
-
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder> {
-
     private final Context context;
     private List<Product> productList;
+    // Thêm interface để xử lý click
+    private OnItemClickListener onItemClickListener;
 
     public ProductAdapter(Context context, List<Product> productList) {
         this.context = context;
         this.productList = productList;
+    }
+
+    // Interface để xử lý sự kiện click
+    public interface OnItemClickListener {
+        void onItemClick(Product product);
+    }
+
+    // Phương thức để set listener
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.onItemClickListener = listener;
     }
 
     public void updateList(List<Product> newList) {
@@ -50,45 +59,45 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
     @Override
     public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
         Product product = productList.get(position);
-
         holder.tvName.setText(product.getProductName());
-
         // Format tiền VNĐ
         NumberFormat formatter = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
         String formattedPrice = formatter.format(product.getPrice()) + " đ";
         holder.tvPrice.setText(formattedPrice);
-
         // Lấy URL ảnh
         String imageUrl = product.getThumbnailUrl();
         Log.d("ImageDebug", "Loading image: " + imageUrl);
-
         // Option cho Glide
         RequestOptions requestOptions = new RequestOptions()
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.image_error)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .fitCenter();
-
         // Load ảnh với Glide và listener để bắt lỗi
         Glide.with(context)
                 .load(imageUrl)
                 .apply(requestOptions)
                 .listener(new RequestListener<Drawable>() {
                     @Override
-                    public boolean onLoadFailed(@Nullable GlideException e, Object model,
-                                                Target<Drawable> target, boolean isFirstResource) {
+                    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
                         Log.e("ImageDebug", "Load failed for: " + imageUrl, e);
-                        return false; // cho phép Glide hiển thị ảnh lỗi mặc định
+                        return false;
                     }
 
                     @Override
-                    public boolean onResourceReady(Drawable resource, Object model,
-                                                   Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                    public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
                         Log.d("ImageDebug", "Loaded image successfully: " + imageUrl);
                         return false;
                     }
                 })
                 .into(holder.imgThumb);
+
+        // Thêm sự kiện click vào item
+        holder.itemView.setOnClickListener(v -> {
+            if (onItemClickListener != null) {
+                onItemClickListener.onItemClick(product);
+            }
+        });
     }
 
     @Override

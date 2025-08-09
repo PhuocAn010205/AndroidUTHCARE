@@ -19,7 +19,7 @@ public class RegisterActivity extends AppCompatActivity {
     Button btnRegister;
     TextView tvLoginLink, tvErrorMessage;
 
-    String serverUrl = "http://192.168.1.3:3000/register";
+    String serverUrl = "http://192.168.1.5:3000/register";
     private static final String TAG = "RegisterActivity";
 
     @Override

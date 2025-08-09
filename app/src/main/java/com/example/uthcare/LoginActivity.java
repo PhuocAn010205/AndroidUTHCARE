@@ -17,12 +17,14 @@ public class LoginActivity extends AppCompatActivity {
     private EditText etEmail, etPassword;
     private TextView tvErrorMessage, tvRegisterLink;
     private Button btnLogin;
-
-    String LOGIN_URL = "http://192.168.1.3:3000/login"; // Đổi theo IP server của bạn
+    private static final String TIME_LOGO = "last_login_time";
+    private static final long TIME_LOGOUT = 2 * 60 * 60 * 1000; // 2 giờ
+    private static final String LOGIN_URL = "http://192.168.1.5:3000/login";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        checkLogin();
         setContentView(R.layout.activity_login);
 
         etEmail = findViewById(R.id.et_email);
@@ -53,6 +55,27 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    private void checkLogin() {
+        SharedPreferences prefs = getSharedPreferences("user_data", MODE_PRIVATE);
+        long lastLoginTime = prefs.getLong(TIME_LOGO, 0);
+
+        if (lastLoginTime != 0 && (System.currentTimeMillis() - lastLoginTime) < TIME_LOGOUT) {
+            Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+            startActivity(intent);
+            finish();
+        } else {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove("username");
+            editor.remove("user_id"); // Xóa user_id
+            editor.remove(TIME_LOGO);
+            editor.apply();
+
+            if (lastLoginTime != 0) {
+                Toast.makeText(this, "Phiên đăng nhập đã hết hạn.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     private void loginUser(String email, String password) {
         tvErrorMessage.setVisibility(View.GONE);
 
@@ -68,14 +91,15 @@ public class LoginActivity extends AppCompatActivity {
                     response -> {
                         try {
                             String msg = response.getString("message");
-
-                            // 🔸 Lấy username từ response (nếu backend trả về)
                             String username = response.optString("username", "Người dùng");
+                            int userId = response.getInt("user_id"); // Lấy user_id từ response
 
-                            // 🔸 Lưu vào SharedPreferences
+                            // Lưu vào SharedPreferences
                             SharedPreferences prefs = getSharedPreferences("user_data", MODE_PRIVATE);
                             SharedPreferences.Editor editor = prefs.edit();
+                            editor.putLong(TIME_LOGO, System.currentTimeMillis());
                             editor.putString("username", username);
+                            editor.putInt("user_id", userId); // Lưu user_id
                             editor.apply();
 
                             showMessage(msg, Color.parseColor("#4CAF50"));
