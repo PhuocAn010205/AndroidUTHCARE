@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Người + gương cầm tay -->
+    <path
+        android:fillColor="#4874B5"
+        android:pathData="M12,4a4,4 0 1,1 0,8a4,4 0 0,1 0,-8zM12,14c-3.33,0-10,1.67-10,5v3h10v-3c0-0.69,0.14-1.35,0.39-1.95
+            c0.74,0.63,1.68,1.03,2.72,1.03c2.21,0,4-1.79,4-4c0-0.76-0.22-1.47-0.59-2.07l2.18-2.18l-1.41-1.41l-2.19,2.18
+            c-0.6-0.37-1.31-0.59-2.07-0.59c-2.21,0-4,1.79-4,4z"/>
+</vector>

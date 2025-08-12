@@ -21,7 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class ProductDetailActivity extends AppCompatActivity {
-    private static final String CART_URL = "http://192.168.1.5:3000/cart";
+    private static final String CART_URL = "http://192.168.1.3:3000/cart";
     private int quantity = 1;
 
     @Override
@@ -59,14 +59,14 @@ public class ProductDetailActivity extends AppCompatActivity {
         String category = getIntent().getStringExtra("category");
         String imageUrl = getIntent().getStringExtra("imageUrl");
         String description = getIntent().getStringExtra("description");
-        String productType = getIntent().getStringExtra("product_type");
+//        String productType = getIntent().getStringExtra("product_type");
         int productId = getIntent().getIntExtra("productId", -1);
 
         // Gán dữ liệu
         tvName.setText(name);
         tvPrice.setText(String.format("%,.0f đ", price));
         tvCategory.setText(category);
-        tvProductType.setText(productType != null ? productType : "Không có loại");
+//        tvProductType.setText(productType != null ? productType : "Không có loại");
         if (description != null) {
             tvDescription.setText(Html.fromHtml(description, Html.FROM_HTML_MODE_COMPACT));
         } else {
@@ -88,7 +88,7 @@ public class ProductDetailActivity extends AppCompatActivity {
             layoutDynamicInfo.setVisibility(View.VISIBLE);
             tvDynamicName.setText(name);
             tvDynamicPrice.setText(String.format("%,.0f đ", price));
-            tvDynamicType.setText(productType != null ? productType : "Không có loại");
+//            tvDynamicType.setText(productType != null ? productType : "Không có loại");
             tvDynamicQuantity.setText(String.valueOf(quantity));
             btnAdd.setVisibility(View.GONE); // Ẩn nút Thêm sau khi bấm
         });

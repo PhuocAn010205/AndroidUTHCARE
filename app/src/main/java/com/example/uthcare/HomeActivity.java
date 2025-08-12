@@ -8,25 +8,29 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.Volley;
-import org.json.JSONArray;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HomeActivity extends AppCompatActivity {
 
     private static final String TAG = "HomeActivity";
     private EditText etSearch;
     private ImageButton btnCart;
-    private TextView tvUsername;
+    private TextView tvUsername, tvCategorySelector;
+    private ImageView ivBanner;
     private RecyclerView rvCategories, rvProducts;
     private ProductAdapter productAdapter;
+    private CategoryAdapter categoryAdapter;
     private List<Product> productList = new ArrayList<>();
-    private static final String PRODUCT_URL = "http://192.168.1.5:3000/products";
+    private static final String PRODUCT_URL = "http://192.168.1.3:3000/products";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +41,19 @@ public class HomeActivity extends AppCompatActivity {
         etSearch = findViewById(R.id.et_search);
         btnCart = findViewById(R.id.btn_cart);
         tvUsername = findViewById(R.id.tv_username);
+//        tvCategorySelector = findViewById(R.id.tvCategorySelector);
+        ivBanner = findViewById(R.id.iv_banner);
+        rvCategories = findViewById(R.id.rv_categories);
         rvProducts = findViewById(R.id.rv_products);
+
+//        // Kiểm tra null để tránh crash
+//        if (etSearch == null || btnCart == null || tvUsername == null || tvCategorySelector == null ||
+//                ivBanner == null || rvCategories == null || rvProducts == null) {
+//            Log.e(TAG, "One or more views are null");
+//            Toast.makeText(this, "Lỗi khởi tạo giao diện", Toast.LENGTH_SHORT).show();
+//            finish();
+//            return;
+//        }
 
         // Hiển thị tên người dùng từ SharedPreferences
         SharedPreferences prefs = getSharedPreferences("user_data", MODE_PRIVATE);
@@ -47,10 +63,15 @@ public class HomeActivity extends AppCompatActivity {
         // Thiết lập danh mục
         setupCategoryRecycler();
 
-        // Tải toàn bộ sản phẩm
-        loadAllProducts();
+        // Khởi tạo productAdapter trước
+        productAdapter = new ProductAdapter(this, productList);
+        rvProducts.setLayoutManager(new GridLayoutManager(this, 2));
+        rvProducts.setAdapter(productAdapter);
         int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.grid_spacing);
         rvProducts.addItemDecoration(new GridSpacingItemDecoration(2, spacingInPixels, true));
+
+        // Tải toàn bộ sản phẩm
+        loadAllProducts();
 
         // Bấm giỏ hàng
         btnCart.setOnClickListener(v -> {
@@ -70,34 +91,25 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void setupCategoryRecycler() {
-        TextView tvCategorySelector = findViewById(R.id.tvCategorySelector);
-        List<String> categories = Arrays.asList(
-                "Trang Chủ",
-                "Thuốc",
-                "Thực phẩm bảo vệ sức khỏe",
-                "Chăm sóc cá nhân",
-                "Chăm sóc sắc đẹp"
-        );
 
-        tvCategorySelector.setOnClickListener(view -> {
-            PopupMenu popupMenu = new PopupMenu(this, view);
-            for (int i = 0; i < categories.size(); i++) {
-                popupMenu.getMenu().add(0, i, i, categories.get(i));
-            }
-
-            popupMenu.setOnMenuItemClickListener(item -> {
-                String selectedCategory = categories.get(item.getItemId());
-                tvCategorySelector.setText(selectedCategory);
-                if (selectedCategory.equals("Trang Chủ")) {
-                    productAdapter.updateList(productList);
+        if (rvCategories != null) {
+            rvCategories.setLayoutManager(new GridLayoutManager(this, 3));
+            List<Category> categories = new ArrayList<>();
+            categories.add(new Category("Trang Chủ",R.drawable.ic_home));
+            categories.add(new Category("Thuốc", R.drawable.ic_medicine));
+            categories.add(new Category("Thực phẩm bảo vệ sức khỏe", R.drawable.ic_menu_info_details));
+            categories.add(new Category("Chăm sóc cá nhân", R.drawable.ic_personal_care));
+            categories.add(new Category("Chăm sóc sắc đẹp", R.drawable.ic_beauty));
+            categoryAdapter = new CategoryAdapter(this, categories);
+            rvCategories.setAdapter(categoryAdapter);
+            categoryAdapter.setOnCategoryClickListener(category -> {
+                if (category.equals("Trang Chủ")) {
+                    if (productAdapter != null) productAdapter.updateList(productList);
                 } else {
-                    filterProductsByCategory(selectedCategory);
+                    filterProductsByCategory(category);
                 }
-                return true;
             });
-
-            popupMenu.show();
-        });
+        }
     }
 
     private void loadAllProducts() {
@@ -107,35 +119,33 @@ public class HomeActivity extends AppCompatActivity {
                         productList.clear();
                         for (int i = 0; i < response.length(); i++) {
                             JSONObject obj = response.getJSONObject(i);
-                            Log.d(TAG, "Raw JSON: " + obj.toString()); // Debug toàn bộ JSON
+                            Log.d(TAG, "Raw JSON: " + obj.toString());
                             String description = obj.optString("description", "Không có mô tả");
-                            Log.d(TAG, "Extracted description: " + description); // Debug giá trị description
+                            Log.d(TAG, "Extracted description: " + description);
                             Product product = new Product(
                                     obj.getInt("product_id"),
                                     obj.getString("product_name"),
                                     obj.getDouble("current_price"),
                                     obj.optString("thumbnail_url"),
                                     obj.getString("category"),
-                                    description // Gán trực tiếp để kiểm tra
+                                    description
                             );
                             productList.add(product);
                         }
-                        productAdapter = new ProductAdapter(HomeActivity.this, productList);
-                        rvProducts.setLayoutManager(new GridLayoutManager(this, 2));
-                        rvProducts.setAdapter(productAdapter);
-
-                        productAdapter.setOnItemClickListener(product -> {
-                            Intent intent = new Intent(HomeActivity.this, ProductDetailActivity.class);
-                            intent.putExtra("name", product.getProductName());
-                            intent.putExtra("price", product.getPrice());
-                            intent.putExtra("category", product.getCategory());
-                            intent.putExtra("imageUrl", product.getThumbnailUrl());
-                            intent.putExtra("productId", product.getProductId());
-                            intent.putExtra("description", product.getDescription());
-                            startActivity(intent);
-                            Log.d(TAG, "Description sent: " + product.getDescription()); // Debug trước khi gửi
-                        });
-
+                        if (productAdapter != null) {
+                            productAdapter.updateList(productList);
+                            productAdapter.setOnItemClickListener(product -> {
+                                Intent intent = new Intent(HomeActivity.this, ProductDetailActivity.class);
+                                intent.putExtra("name", product.getProductName());
+                                intent.putExtra("price", product.getPrice());
+                                intent.putExtra("category", product.getCategory());
+                                intent.putExtra("imageUrl", product.getThumbnailUrl());
+                                intent.putExtra("productId", product.getProductId());
+                                intent.putExtra("description", product.getDescription());
+                                startActivity(intent);
+                                Log.d(TAG, "Description sent: " + product.getDescription());
+                            });
+                        }
                     } catch (JSONException e) {
                         Log.e(TAG, "Error parsing JSON", e);
                         Toast.makeText(this, "Lỗi phân tích dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -146,7 +156,6 @@ public class HomeActivity extends AppCompatActivity {
                     Toast.makeText(this, "Không thể tải sản phẩm: " + error.getMessage(), Toast.LENGTH_SHORT).show();
                 }
         );
-
         Volley.newRequestQueue(this).add(request);
     }
 
@@ -157,7 +166,9 @@ public class HomeActivity extends AppCompatActivity {
                 filtered.add(p);
             }
         }
-        productAdapter.updateList(filtered);
+        if (productAdapter != null) {
+            productAdapter.updateList(filtered);
+        }
     }
 
     private void filterProductsBySearch(String query) {
@@ -167,6 +178,8 @@ public class HomeActivity extends AppCompatActivity {
                 filtered.add(p);
             }
         }
-        productAdapter.updateList(filtered);
+        if (productAdapter != null) {
+            productAdapter.updateList(filtered);
+        }
     }
 }

@@ -7,4 +7,5 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="blue_button">#4285F4</color>
+    <color name="blue__header">#4874b5</color>
 </resources>

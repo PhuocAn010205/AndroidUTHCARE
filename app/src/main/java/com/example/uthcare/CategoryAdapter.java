@@ -1,64 +1,62 @@
 package com.example.uthcare;
 
-import android.graphics.Typeface;
-import android.view.*;
-import android.widget.*;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import java.util.*;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
-    private final List<String> categoryList;
-    private final OnCategoryClickListener listener;
-    private int selectedPosition = RecyclerView.NO_POSITION;
+    private Context context;
+    private java.util.List<Category> categories;
+    private OnCategoryClickListener listener;
 
-    public interface OnCategoryClickListener {
-        void onCategoryClick(String category);
+    public CategoryAdapter(Context context, java.util.List<Category> categories) {
+        this.context = context;
+        this.categories = categories;
     }
 
-    public CategoryAdapter(List<String> categoryList, OnCategoryClickListener listener) {
-        this.categoryList = categoryList;
+    public void setOnCategoryClickListener(OnCategoryClickListener listener) {
         this.listener = listener;
     }
 
     @NonNull
     @Override
     public CategoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(android.R.layout.simple_list_item_1, parent, false);
+        View view = LayoutInflater.from(context).inflate(R.layout.item_category, parent, false);
         return new CategoryViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
-        String category = categoryList.get(position);
-        holder.textView.setText(category);
-
-        // Set bold if selected
-        holder.textView.setTypeface(null, selectedPosition == position ? Typeface.BOLD : Typeface.NORMAL);
-
-        // Click event
+        Category category = categories.get(position);
+        holder.tvCategoryName.setText(category.getName());
+        holder.ivCategoryImage.setImageResource(category.getImageRes());
         holder.itemView.setOnClickListener(v -> {
-            int oldPosition = selectedPosition;
-            selectedPosition = holder.getAdapterPosition();
-            notifyItemChanged(oldPosition);
-            notifyItemChanged(selectedPosition);
-            listener.onCategoryClick(category);
+            if (listener != null) listener.onCategoryClick(category.getName());
         });
     }
 
     @Override
     public int getItemCount() {
-        return categoryList.size();
+        return categories.size();
     }
 
     public static class CategoryViewHolder extends RecyclerView.ViewHolder {
-        TextView textView;
+        ImageView ivCategoryImage;
+        TextView tvCategoryName;
 
         public CategoryViewHolder(@NonNull View itemView) {
             super(itemView);
-            textView = itemView.findViewById(android.R.id.text1);
-            textView.setPadding(32, 24, 32, 24); // tùy chỉnh padding nếu cần
+            ivCategoryImage = itemView.findViewById(R.id.iv_category_image);
+            tvCategoryName = itemView.findViewById(R.id.tv_category_name);
         }
+    }
+
+    public interface OnCategoryClickListener {
+        void onCategoryClick(String category);
     }
 }

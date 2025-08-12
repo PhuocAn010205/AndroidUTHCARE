@@ -20,8 +20,8 @@ public class CartActivity extends AppCompatActivity {
     private RecyclerView rvCart;
     private CartAdapter cartAdapter;
     private List<CartItem> cartItems = new ArrayList<>();
-    private static final String CART_URL = "http://192.168.1.5:3000/cart/";
-    private static final String DELETE_ALL_URL = "http://192.168.1.5:3000/cart/clear"; // Giả sử có API xóa tất cả
+    private static final String CART_URL = "http://192.168.1.3:3000/cart/";
+    private static final String DELETE_ALL_URL = "http://192.168.1.3:3000/cart/clear"; // Giả sử có API xóa tất cả
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

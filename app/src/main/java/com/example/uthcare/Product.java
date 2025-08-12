@@ -6,9 +6,9 @@ public class Product {
     private double price;
     private String thumbnailUrl;
     private String category;
-    private String description; // Đảm bảo khai báo
+    private String description;
 
-    private static final String BASE_URL = "http://192.168.1.5:3000";
+    private static final String BASE_URL = "http://192.168.1.3:3000";
 
     public Product(int productId, String productName, double price, String thumbnailUrl, String category, String description) {
         this.productId = productId;
@@ -16,34 +16,16 @@ public class Product {
         this.price = price;
         this.thumbnailUrl = thumbnailUrl != null ? thumbnailUrl : "";
         this.category = category;
-        this.description = description != null ? description : "Không có mô tả"; // Gán mặc định nếu null
+        this.description = description != null ? description : "Không có mô tả";
     }
 
-    public int getProductId() {
-        return productId;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public String getDescription() {
-        return description != null ? description : "Không có mô tả"; // Trả về mặc định nếu null
-    }
-
+    public int getProductId() { return productId; }
+    public String getProductName() { return productName; }
+    public double getPrice() { return price; }
+    public String getCategory() { return category; }
+    public String getDescription() { return description; }
     public String getThumbnailUrl() {
-        if (thumbnailUrl == null || thumbnailUrl.trim().isEmpty()) {
-            return "";
-        }
-        String fullPath = thumbnailUrl.startsWith("http://") || thumbnailUrl.startsWith("https://") ? thumbnailUrl : BASE_URL + thumbnailUrl;
-        return fullPath;
+        if (thumbnailUrl == null || thumbnailUrl.trim().isEmpty()) return "";
+        return thumbnailUrl.startsWith("http://") || thumbnailUrl.startsWith("https://") ? thumbnailUrl : BASE_URL + thumbnailUrl;
     }
 }

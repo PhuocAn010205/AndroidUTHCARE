@@ -29,6 +29,8 @@
         <activity android:name=".HomeActivity" />
         <activity android:name=".ProductDetailActivity"/>
         <activity android:name=".CartActivity" />
+        <activity android:name=".AccountActivity" />
+
 
     </application>
 
