@@ -3,19 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="vertical">
 
-    >
-
-    <!-- Toolbar với màu trắng và nút giỏ hàng điều chỉnh -->
-
-    <!-- ScrollView chứa thông tin sản phẩm -->
-
+    <!-- Toolbar -->
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="#FFFFFF"
+        android:background="@color/blue__header"
         app:titleTextColor="@android:color/black">
 
         <ImageButton
@@ -23,7 +18,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="start"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="12dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_back" />
 
@@ -37,108 +32,26 @@
             android:src="@drawable/ic_cart" />
     </androidx.appcompat.widget.Toolbar>
 
+    <!-- Nội dung chính -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:padding="16dp">
+        android:padding="16dp"
+        android:background="#FFF"
+        android:scrollbars="none">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Hình ảnh sản phẩm với số lượng động -->
-            <RelativeLayout
+            <ImageView
+                android:id="@+id/iv_thumbnail"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <ImageView
-                    android:id="@+id/iv_thumbnail"
-                    android:layout_width="match_parent"
-                    android:layout_height="250dp"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/placeholder" />
-
-                <!-- Nút Thêm (số lượng sẽ hiển thị động khi bấm) -->
-                <Button
-                    android:id="@+id/btn_add"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Thêm"
-                    android:backgroundTint="#2196F3"
-                    android:textColor="#FFFFFF"
-                    android:layout_alignParentBottom="true"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginStart="8dp" />
-
-                <!-- Phần hiển thị động (tên, giá, loại, số lượng) khi thêm -->
-                <LinearLayout
-                    android:id="@+id/layout_dynamic_info"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone"
-                    android:padding="8dp"
-                    android:background="#E0E0E0"
-                    android:layout_alignParentBottom="true">
-
-                    <TextView
-                        android:id="@+id/tv_dynamic_name"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:maxLines="2"
-                        android:ellipsize="end" />
-
-                    <TextView
-                        android:id="@+id/tv_dynamic_price"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#FF5722"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/tv_dynamic_type"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="12sp" />
-
-                    <!-- Phần số lượng với nút + và - -->
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="4dp">
-
-                        <Button
-                            android:id="@+id/btn_decrease"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="-"
-                            android:textSize="18sp"
-                            android:backgroundTint="#E0E0E0" />
-
-                        <TextView
-                            android:id="@+id/tv_dynamic_quantity"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1"
-                            android:textSize="16sp"
-                            android:paddingHorizontal="8dp"
-                            android:gravity="center" />
-
-                        <Button
-                            android:id="@+id/btn_increase"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="+"
-                            android:textSize="18sp"
-                            android:backgroundTint="#E0E0E0" />
-                    </LinearLayout>
-                </LinearLayout>
-            </RelativeLayout>
+                android:layout_height="250dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/placeholder" />
 
             <TextView
                 android:id="@+id/tv_name"
@@ -165,26 +78,78 @@
                 android:textSize="16sp"
                 android:layout_marginTop="8dp" />
 
-            <!-- Hiển thị product_type -->
-            <TextView
-                android:id="@+id/tv_product_type"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:layout_marginTop="4dp" />
-
-            <!-- Phần mô tả sản phẩm -->
             <TextView
                 android:id="@+id/tv_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="14sp"
+                android:textSize="15sp"
+                android:textStyle="bold"
                 android:layout_marginTop="16dp"
                 android:text="Mô tả sản phẩm..." />
         </LinearLayout>
     </ScrollView>
 
-    <!-- Layer riêng cho các nút ở dưới cùng với background trắng -->
+    <!-- Layout thông tin động -->
+    <LinearLayout
+        android:id="@+id/layout_dynamic_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:padding="8dp"
+        android:background="#E0E0E0">
+
+        <TextView
+            android:id="@+id/tv_dynamic_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/tv_dynamic_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FF5722"
+            android:textSize="14sp" />
+
+        <!-- Số lượng -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <ImageButton
+                android:id="@+id/btn_decrease"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_minus"
+                android:contentDescription="Giảm" />
+
+            <TextView
+                android:id="@+id/tv_dynamic_quantity"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="1"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:paddingHorizontal="8dp" />
+
+            <ImageButton
+                android:id="@+id/btn_increase"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_plus"
+                android:contentDescription="Tăng" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Thanh nút dưới cùng -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -198,7 +163,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Thêm vào giỏ"
-            android:backgroundTint="#2196F3"
+            android:backgroundTint="@color/blue__header"
             android:textColor="#FFFFFF"
             android:layout_marginEnd="8dp" />
 
@@ -208,7 +173,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Mua ngay"
-            android:backgroundTint="#FF5722"
+            android:backgroundTint="@color/blue__header"
             android:textColor="#FFFFFF" />
     </LinearLayout>
+
 </LinearLayout>

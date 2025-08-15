@@ -19,7 +19,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private static final String TIME_LOGO = "last_login_time";
     private static final long TIME_LOGOUT = 2 * 60 * 60 * 1000; // 2 giờ
-    private static final String LOGIN_URL = "http://192.168.1.3:3000/login";
+    private static final String LOGIN_URL = "http://10.0.2.2:3000/login";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

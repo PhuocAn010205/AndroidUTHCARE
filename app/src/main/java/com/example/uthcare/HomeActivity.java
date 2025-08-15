@@ -38,7 +38,7 @@ public class HomeActivity extends AppCompatActivity {
     private ProductAdapter productAdapter;
     private CategoryAdapter categoryAdapter;
     private List<Product> productList = new ArrayList<>();
-    private static final String PRODUCT_URL = "http://192.168.1.3:3000/products";
+    private static final String PRODUCT_URL = "http://10.0.2.2:3000/products";
 
     // Banner
     private ViewPager2 bannerViewPager;

@@ -21,7 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class ProductDetailActivity extends AppCompatActivity {
-    private static final String CART_URL = "http://192.168.1.3:3000/cart";
+    private static final String CART_URL = "http://10.0.2.2:3000/cart";
     private int quantity = 1;
 
     @Override
@@ -29,7 +29,6 @@ public class ProductDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_detail);
 
-        // Thiết lập Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -40,60 +39,36 @@ public class ProductDetailActivity extends AppCompatActivity {
         TextView tvName = findViewById(R.id.tv_name);
         TextView tvPrice = findViewById(R.id.tv_price);
         TextView tvCategory = findViewById(R.id.tv_category);
-        TextView tvProductType = findViewById(R.id.tv_product_type);
         TextView tvDescription = findViewById(R.id.tv_description);
-        Button btnAdd = findViewById(R.id.btn_add);
         LinearLayout layoutDynamicInfo = findViewById(R.id.layout_dynamic_info);
         TextView tvDynamicName = findViewById(R.id.tv_dynamic_name);
         TextView tvDynamicPrice = findViewById(R.id.tv_dynamic_price);
-        TextView tvDynamicType = findViewById(R.id.tv_dynamic_type);
         TextView tvDynamicQuantity = findViewById(R.id.tv_dynamic_quantity);
-        Button btnDecrease = findViewById(R.id.btn_decrease);
-        Button btnIncrease = findViewById(R.id.btn_increase);
+        ImageButton btnDecrease = findViewById(R.id.btn_decrease);
+        ImageButton btnIncrease = findViewById(R.id.btn_increase);
         Button btnAddToCart = findViewById(R.id.btn_add_to_cart);
         Button btnBuyNow = findViewById(R.id.btn_buy_now);
 
-        // Nhận dữ liệu từ Intent
+        // Lấy dữ liệu từ Intent
         String name = getIntent().getStringExtra("name");
         double price = getIntent().getDoubleExtra("price", 0);
         String category = getIntent().getStringExtra("category");
         String imageUrl = getIntent().getStringExtra("imageUrl");
         String description = getIntent().getStringExtra("description");
-//        String productType = getIntent().getStringExtra("product_type");
         int productId = getIntent().getIntExtra("productId", -1);
 
         // Gán dữ liệu
         tvName.setText(name);
         tvPrice.setText(String.format("%,.0f đ", price));
         tvCategory.setText(category);
-//        tvProductType.setText(productType != null ? productType : "Không có loại");
-        if (description != null) {
-            tvDescription.setText(Html.fromHtml(description, Html.FROM_HTML_MODE_COMPACT));
-        } else {
-            tvDescription.setText("Không có mô tả");
-        }
+        tvDescription.setText(description != null ? Html.fromHtml(description, Html.FROM_HTML_MODE_COMPACT) : "Không có mô tả");
         Glide.with(this).load(imageUrl).placeholder(R.drawable.placeholder).into(ivThumbnail);
 
-        // Nút back
         btnBack.setOnClickListener(v -> finish());
 
-        // Nút giỏ hàng ở trên
-        btnCartTop.setOnClickListener(v -> {
-            Intent intent = new Intent(this, CartActivity.class);
-            startActivity(intent);
-        });
+        btnCartTop.setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
 
-        // Nút Thêm để hiển thị thông tin động
-        btnAdd.setOnClickListener(v -> {
-            layoutDynamicInfo.setVisibility(View.VISIBLE);
-            tvDynamicName.setText(name);
-            tvDynamicPrice.setText(String.format("%,.0f đ", price));
-//            tvDynamicType.setText(productType != null ? productType : "Không có loại");
-            tvDynamicQuantity.setText(String.valueOf(quantity));
-            btnAdd.setVisibility(View.GONE); // Ẩn nút Thêm sau khi bấm
-        });
-
-        // Nút Giảm số lượng
+        // Nút tăng/giảm
         btnDecrease.setOnClickListener(v -> {
             if (quantity > 1) {
                 quantity--;
@@ -101,29 +76,34 @@ public class ProductDetailActivity extends AppCompatActivity {
             }
         });
 
-        // Nút Tăng số lượng
         btnIncrease.setOnClickListener(v -> {
             quantity++;
             tvDynamicQuantity.setText(String.valueOf(quantity));
         });
 
-        // Xử lý nút Thêm vào giỏ
+        // Xử lý "Thêm vào giỏ"
         btnAddToCart.setOnClickListener(v -> {
-            if (layoutDynamicInfo.getVisibility() == View.VISIBLE) {
-                addToCart(getUserId(), productId, quantity);
+            if (layoutDynamicInfo.getVisibility() != View.VISIBLE) {
+                layoutDynamicInfo.setVisibility(View.VISIBLE);
+                tvDynamicName.setText(name);
+                tvDynamicPrice.setText(String.format("%,.0f đ", price));
+                tvDynamicQuantity.setText(String.valueOf(quantity));
             } else {
-                Toast.makeText(this, "Vui lòng bấm Thêm để chọn số lượng", Toast.LENGTH_SHORT).show();
+                addToCart(getUserId(), productId, quantity);
             }
         });
 
-        // Xử lý nút Mua ngay
+        // Xử lý "Mua ngay"
         btnBuyNow.setOnClickListener(v -> {
-            if (layoutDynamicInfo.getVisibility() == View.VISIBLE) {
+            if (layoutDynamicInfo.getVisibility() != View.VISIBLE) {
+                layoutDynamicInfo.setVisibility(View.VISIBLE);
+                tvDynamicName.setText(name);
+                tvDynamicPrice.setText(String.format("%,.0f đ", price));
+                tvDynamicQuantity.setText(String.valueOf(quantity));
+            } else {
                 addToCart(getUserId(), productId, quantity);
                 Toast.makeText(this, "Chuyển đến trang thanh toán...", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, CartActivity.class));
-            } else {
-                Toast.makeText(this, "Vui lòng bấm Thêm để chọn số lượng", Toast.LENGTH_SHORT).show();
             }
         });
     }
