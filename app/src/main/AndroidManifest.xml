@@ -28,9 +28,12 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".HomeActivity" />
         <activity android:name=".ProductDetailActivity"/>
-        <activity android:name=".CartActivity" />
+        <activity android:name=".CartActivity"
+            android:exported="true"
+            />
         <activity android:name=".AccountActivity" />
 
+        <activity android:name=".PaymentActivity" />
 
     </application>
 

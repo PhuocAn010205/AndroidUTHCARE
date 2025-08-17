@@ -60,9 +60,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:hint="Tìm kiếm sản phẩm..."
+
                 android:background="@android:color/transparent"
                 android:paddingStart="8dp"
-                android:textColorHint="#757575"
+                android:textColorHint="#ccc"
                 android:inputType="text" />
         </LinearLayout>
     </LinearLayout>

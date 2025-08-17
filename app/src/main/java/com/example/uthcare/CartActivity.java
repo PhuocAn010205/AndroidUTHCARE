@@ -1,5 +1,6 @@
 package com.example.uthcare;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
@@ -11,6 +12,7 @@ import com.android.volley.Request;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.material.snackbar.Snackbar;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.util.ArrayList;
@@ -21,32 +23,39 @@ public class CartActivity extends AppCompatActivity {
     private CartAdapter cartAdapter;
     private List<CartItem> cartItems = new ArrayList<>();
     private static final String CART_URL = "http://10.0.2.2:3000/cart/";
-    private static final String DELETE_ALL_URL = "http://10.0.2.2:3000/cart/clear"; // Giả sử có API xóa tất cả
+    private static final String DELETE_ALL_URL = "http://10.0.2.2:3000/cart/clear";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cart);
 
+        // Toolbar + back button
+        androidx.appcompat.widget.Toolbar toolbar = findViewById(R.id.toolbar_cart);
+        setSupportActionBar(toolbar);
+        toolbar.setNavigationOnClickListener(v -> {
+            Intent intent = new Intent(CartActivity.this, HomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+        });
+
         rvCart = findViewById(R.id.rv_cart);
         rvCart.setLayoutManager(new LinearLayoutManager(this));
-
         cartAdapter = new CartAdapter(this, cartItems);
         rvCart.setAdapter(cartAdapter);
 
-        // Lấy user_id từ SharedPreferences
         SharedPreferences prefs = getSharedPreferences("user_data", MODE_PRIVATE);
         int userId = prefs.getInt("user_id", -1);
         if (userId == -1) {
-            Toast.makeText(this, "Vui lòng đăng nhập để xem giỏ hàng", Toast.LENGTH_SHORT).show();
+            Snackbar.make(rvCart, "Vui lòng đăng nhập để xem giỏ hàng", Snackbar.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        // Tải giỏ hàng
         loadCart(userId);
 
-        // Xử lý các sự kiện từ adapter
+        // Handle adapter events
         cartAdapter.setOnItemActionListener(new CartAdapter.OnItemActionListener() {
             @Override
             public void onItemDelete(CartItem cartItem) {
@@ -59,18 +68,27 @@ public class CartActivity extends AppCompatActivity {
             }
         });
 
-        // Xử lý nút Thanh toán
+        // Checkout Button
         Button btnCheckout = findViewById(R.id.btn_checkout);
         btnCheckout.setOnClickListener(v -> {
-            Toast.makeText(this, "Chức năng thanh toán chưa được cài đặt", Toast.LENGTH_SHORT).show();
-            // Thêm logic thanh toán ở đây (ví dụ: gửi đơn hàng đến server)
+            List<CartItem> selectedItems = new ArrayList<>();
+            for (CartItem item : cartItems) {
+                if (item.isSelected()) {
+                    selectedItems.add(item);
+                }
+            }
+            if (selectedItems.isEmpty()) {
+                Snackbar.make(rvCart, "Vui lòng chọn sản phẩm để thanh toán", Snackbar.LENGTH_LONG).show();
+            } else {
+                Intent intent = new Intent(CartActivity.this, PaymentActivity.class);
+                intent.putExtra("selectedItems", new ArrayList<>(selectedItems));
+                startActivity(intent);
+            }
         });
 
-        // Xử lý nút Xóa tất cả
+        // Clear Cart Button
         Button btnClearCart = findViewById(R.id.btn_clear_cart);
-        btnClearCart.setOnClickListener(v -> {
-            clearCart(userId);
-        });
+        btnClearCart.setOnClickListener(v -> clearCart(userId));
     }
 
     private void loadCart(int userId) {
@@ -85,6 +103,7 @@ public class CartActivity extends AppCompatActivity {
                             JSONObject obj = response.getJSONObject(i);
                             CartItem cartItem = new CartItem(
                                     obj.getInt("id"),
+                                    obj.getInt("product_id"), // Thêm product_id
                                     obj.getInt("quantity"),
                                     obj.getString("product_name"),
                                     obj.getDouble("current_price"),
@@ -94,12 +113,11 @@ public class CartActivity extends AppCompatActivity {
                         }
                         cartAdapter.notifyDataSetChanged();
                     } catch (JSONException e) {
-                        Toast.makeText(this, "Lỗi phân tích dữ liệu giỏ hàng", Toast.LENGTH_SHORT).show();
+                        Snackbar.make(rvCart, "Lỗi phân tích dữ liệu giỏ hàng", Snackbar.LENGTH_LONG).show();
                     }
                 },
-                error -> Toast.makeText(this, "Không thể tải giỏ hàng", Toast.LENGTH_SHORT).show()
+                error -> Snackbar.make(rvCart, "Không thể tải giỏ hàng", Snackbar.LENGTH_LONG).show()
         );
-
         Volley.newRequestQueue(this).add(request);
     }
 
@@ -108,20 +126,16 @@ public class CartActivity extends AppCompatActivity {
         try {
             jsonBody.put("quantity", newQuantity);
         } catch (JSONException e) {
-            Toast.makeText(this, "Lỗi tạo dữ liệu", Toast.LENGTH_SHORT).show();
+            Snackbar.make(rvCart, "Lỗi tạo dữ liệu", Snackbar.LENGTH_SHORT).show();
             return;
         }
-
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.PUT,
-                CART_URL + cartItemId, // Giả sử có API PUT để cập nhật số lượng
+                CART_URL + cartItemId,
                 jsonBody,
-                response -> {
-                    Toast.makeText(this, "Cập nhật số lượng thành công", Toast.LENGTH_SHORT).show();
-                },
-                error -> Toast.makeText(this, "Lỗi cập nhật số lượng", Toast.LENGTH_SHORT).show()
+                response -> Snackbar.make(rvCart, "Cập nhật số lượng thành công", Snackbar.LENGTH_SHORT).show(),
+                error -> Snackbar.make(rvCart, "Lỗi cập nhật số lượng", Snackbar.LENGTH_SHORT).show()
         );
-
         Volley.newRequestQueue(this).add(request);
     }
 
@@ -131,13 +145,12 @@ public class CartActivity extends AppCompatActivity {
                 CART_URL + cartItemId,
                 null,
                 response -> {
-                    Toast.makeText(this, response.optString("message", "Xóa sản phẩm thành công"), Toast.LENGTH_SHORT).show();
+                    Snackbar.make(rvCart, "Xóa sản phẩm thành công", Snackbar.LENGTH_SHORT).show();
                     SharedPreferences prefs = getSharedPreferences("user_data", MODE_PRIVATE);
                     loadCart(prefs.getInt("user_id", -1));
                 },
-                error -> Toast.makeText(this, "Lỗi xóa sản phẩm", Toast.LENGTH_SHORT).show()
+                error -> Snackbar.make(rvCart, "Lỗi xóa sản phẩm", Snackbar.LENGTH_SHORT).show()
         );
-
         Volley.newRequestQueue(this).add(request);
     }
 
@@ -146,21 +159,19 @@ public class CartActivity extends AppCompatActivity {
         try {
             jsonBody.put("user_id", userId);
         } catch (JSONException e) {
-            Toast.makeText(this, "Lỗi tạo dữ liệu", Toast.LENGTH_SHORT).show();
+            Snackbar.make(rvCart, "Lỗi tạo dữ liệu", Snackbar.LENGTH_SHORT).show();
             return;
         }
-
         JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.POST,
                 DELETE_ALL_URL,
                 jsonBody,
                 response -> {
-                    Toast.makeText(this, "Xóa tất cả sản phẩm thành công", Toast.LENGTH_SHORT).show();
-                    loadCart(userId); // Tải lại giỏ hàng
+                    Snackbar.make(rvCart, "Xóa tất cả sản phẩm thành công", Snackbar.LENGTH_LONG).show();
+                    loadCart(userId);
                 },
-                error -> Toast.makeText(this, "Lỗi xóa giỏ hàng", Toast.LENGTH_SHORT).show()
+                error -> Snackbar.make(rvCart, "Lỗi xóa giỏ hàng", Snackbar.LENGTH_LONG).show()
         );
-
         Volley.newRequestQueue(this).add(request);
     }
 }

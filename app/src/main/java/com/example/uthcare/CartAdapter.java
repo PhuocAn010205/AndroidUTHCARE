@@ -4,34 +4,38 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
-import java.text.NumberFormat;
+
+import java.text.DecimalFormat;
 import java.util.List;
-import java.util.Locale;
 
 public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder> {
-    private final Context context;
-    private final List<CartItem> cartItems;
-    private OnItemActionListener actionListener;
-
-    public interface OnItemActionListener {
-        void onItemDelete(CartItem cartItem);
-        void onQuantityChange(CartItem cartItem, int newQuantity);
-    }
+    private Context context;
+    private List<CartItem> cartItems;
+    private OnItemActionListener listener;
+    private static final String BASE_URL = "http://10.0.2.2:3000"; // Thêm host
+    private final DecimalFormat decimalFormat = new DecimalFormat("#,###");
 
     public CartAdapter(Context context, List<CartItem> cartItems) {
         this.context = context;
         this.cartItems = cartItems;
     }
 
+    public interface OnItemActionListener {
+        void onItemDelete(CartItem cartItem);
+        void onQuantityChange(CartItem cartItem, int newQuantity);
+    }
+
     public void setOnItemActionListener(OnItemActionListener listener) {
-        this.actionListener = listener;
+        this.listener = listener;
     }
 
     @NonNull
@@ -43,46 +47,38 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull CartViewHolder holder, int position) {
-        CartItem cartItem = cartItems.get(position);
-        holder.tvName.setText(cartItem.getProductName());
-        holder.tvQuantity.setText(String.valueOf(cartItem.getQuantity()));
-        NumberFormat formatter = NumberFormat.getNumberInstance(new Locale("vi", "VN"));
-        holder.tvPrice.setText(formatter.format(cartItem.getPrice()) + " đ");
+        CartItem item = cartItems.get(position);
+        holder.tvName.setText(item.getProductName());
+        holder.tvPrice.setText(decimalFormat.format(item.getPrice()) + "đ");
+        holder.tvQuantity.setText(String.valueOf(item.getQuantity()));
 
-        Glide.with(context)
-                .load(cartItem.getThumbnailUrl())
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.image_error)
-                .into(holder.imgThumb);
+        holder.cbSelect.setOnCheckedChangeListener(null);
+        holder.cbSelect.setChecked(item.isSelected());
+        holder.cbSelect.setOnCheckedChangeListener((buttonView, isChecked) -> item.setSelected(isChecked));
 
-        // Xử lý nút Giảm số lượng
-        holder.btnDecrease.setOnClickListener(v -> {
-            int newQuantity = cartItem.getQuantity() - 1;
-            if (newQuantity > 0) {
-                cartItem.setQuantity(newQuantity); // Cập nhật trong CartItem
-                holder.tvQuantity.setText(String.valueOf(newQuantity));
-                if (actionListener != null) {
-                    actionListener.onQuantityChange(cartItem, newQuantity);
-                }
-            }
-        });
-
-        // Xử lý nút Tăng số lượng
         holder.btnIncrease.setOnClickListener(v -> {
-            int newQuantity = cartItem.getQuantity() + 1;
-            cartItem.setQuantity(newQuantity); // Cập nhật trong CartItem
+            int newQuantity = item.getQuantity() + 1;
+            item.setQuantity(newQuantity);
             holder.tvQuantity.setText(String.valueOf(newQuantity));
-            if (actionListener != null) {
-                actionListener.onQuantityChange(cartItem, newQuantity);
-            }
+            if (listener != null) listener.onQuantityChange(item, newQuantity);
         });
 
-        // Xử lý nút Xóa
-        holder.btnDelete.setOnClickListener(v -> {
-            if (actionListener != null) {
-                actionListener.onItemDelete(cartItem);
-            }
+        holder.btnDecrease.setOnClickListener(v -> {
+            int newQuantity = Math.max(1, item.getQuantity() - 1);
+            item.setQuantity(newQuantity);
+            holder.tvQuantity.setText(String.valueOf(newQuantity));
+            if (listener != null) listener.onQuantityChange(item, newQuantity);
         });
+
+        holder.btnDelete.setOnClickListener(v -> {
+            if (listener != null) listener.onItemDelete(item);
+        });
+
+        String fullThumbnailUrl = BASE_URL + item.getThumbnailUrl();
+        Glide.with(context)
+                .load(fullThumbnailUrl)
+                .placeholder(R.drawable.placeholder)
+                .into(holder.ivThumb);
     }
 
     @Override
@@ -90,22 +86,22 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
         return cartItems.size();
     }
 
-    public static class CartViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgThumb;
+    static class CartViewHolder extends RecyclerView.ViewHolder {
+        CheckBox cbSelect;
+        ImageView ivThumb;
         TextView tvName, tvPrice, tvQuantity;
-        Button btnDecrease, btnIncrease;
-        ImageButton btnDelete;
+        ImageButton btnIncrease, btnDecrease, btnDelete;
 
         public CartViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgThumb = itemView.findViewById(R.id.iv_thumb);
+            cbSelect = itemView.findViewById(R.id.cb_select);
+            ivThumb = itemView.findViewById(R.id.iv_thumb);
             tvName = itemView.findViewById(R.id.tv_name);
             tvPrice = itemView.findViewById(R.id.tv_price);
             tvQuantity = itemView.findViewById(R.id.tv_quantity);
-            btnDecrease = itemView.findViewById(R.id.btn_decrease);
             btnIncrease = itemView.findViewById(R.id.btn_increase);
+            btnDecrease = itemView.findViewById(R.id.btn_decrease);
             btnDelete = itemView.findViewById(R.id.btn_delete);
         }
     }
 }
-
