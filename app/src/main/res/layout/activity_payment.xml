@@ -137,21 +137,29 @@
                         android:layout_height="wrap_content"
                         android:text="Thanh toán khi nhận hàng (COD)"
                         android:textSize="16sp"
-                        android:checked="true" />
+                        android:checked="true"
+                        android:buttonTint="@color/blue_button"
+                        />
 
                     <RadioButton
                         android:id="@+id/rb_bank"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Thanh toán qua thẻ ngân hàng"
-                        android:textSize="16sp" />
+                        android:textSize="16sp"
+                        android:buttonTint="@color/blue_button"
+
+                        />
 
                     <RadioButton
                         android:id="@+id/rb_momo"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Thanh toán qua MoMo"
-                        android:textSize="16sp" />
+                        android:textSize="16sp"
+                        android:buttonTint="@color/blue_button"
+
+                        />
                 </RadioGroup>
             </LinearLayout>
 

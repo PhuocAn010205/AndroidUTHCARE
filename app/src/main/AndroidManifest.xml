@@ -34,6 +34,7 @@
         <activity android:name=".AccountActivity" />
 
         <activity android:name=".PaymentActivity" />
+        <activity android:name=".OrdersActivity"/>
 
     </application>
 

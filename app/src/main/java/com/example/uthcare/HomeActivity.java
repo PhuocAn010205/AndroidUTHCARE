@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
@@ -47,6 +48,10 @@ public class HomeActivity extends AppCompatActivity {
     private int currentBanner = 0;
     private List<Integer> banners;
 
+    // Bottom buttons
+    private ImageButton btnHome, btnViewOrders, btnLogout;
+    private NestedScrollView nestedScrollView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +64,12 @@ public class HomeActivity extends AppCompatActivity {
         rvCategories = findViewById(R.id.rv_categories);
         rvProducts = findViewById(R.id.rv_products);
         bannerViewPager = findViewById(R.id.bannerViewPager);
+        nestedScrollView = findViewById(R.id.nested_scroll_view); // Cần thêm ID này vào layout
+
+        // Bottom buttons
+        btnHome = findViewById(R.id.btn_home);
+        btnViewOrders = findViewById(R.id.btn_view_orders);
+        btnLogout = findViewById(R.id.btn_logout);
 
         // Hiển thị tên người dùng
         SharedPreferences prefs = getSharedPreferences("user_data", MODE_PRIVATE);
@@ -90,12 +101,39 @@ public class HomeActivity extends AppCompatActivity {
             }
             return false;
         });
+
+        // Sự kiện bottom buttons
+        btnHome.setOnClickListener(v -> {
+            // Reload đầu trang: Scroll lên đầu NestedScrollView
+            if (nestedScrollView != null) {
+                nestedScrollView.smoothScrollTo(0, 0); // Scroll lên đầu trang
+            }
+            Toast.makeText(this, "Đã load lại đầu trang", Toast.LENGTH_SHORT).show();
+        });
+
+        btnViewOrders.setOnClickListener(v -> {
+            Intent intent = new Intent(HomeActivity.this, OrdersActivity.class);
+            startActivity(intent);
+        });
+
+        btnLogout.setOnClickListener(v -> {
+            // Xử lý đăng xuất
+            SharedPreferences prefsLogout = getSharedPreferences("user_data", MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefsLogout.edit();
+            editor.clear();
+            editor.apply();
+            Toast.makeText(this, "Đăng xuất thành công", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 
     private void setupCategoryRecycler() {
         rvCategories.setLayoutManager(new GridLayoutManager(this, 3));
         List<Category> categories = new ArrayList<>();
-        categories.add(new Category("Trang Chủ", R.drawable.ic_home));
+        categories.add(new Category("Tất cả", R.drawable.ic_home));
         categories.add(new Category("Thuốc", R.drawable.ic_medicine));
         categories.add(new Category("Thực phẩm bảo vệ sức khỏe", R.drawable.ic_menu_info_details));
         categories.add(new Category("Chăm sóc cá nhân", R.drawable.ic_personal_care));
@@ -104,7 +142,7 @@ public class HomeActivity extends AppCompatActivity {
         categoryAdapter = new CategoryAdapter(this, categories);
         rvCategories.setAdapter(categoryAdapter);
         categoryAdapter.setOnCategoryClickListener(category -> {
-            if (category.equals("Trang Chủ")) {
+            if (category.equals("Tất cả")) {
                 productAdapter.updateList(productList);
             } else {
                 filterProductsByCategory(category);
