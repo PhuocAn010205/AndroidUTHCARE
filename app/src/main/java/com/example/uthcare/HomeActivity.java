@@ -26,7 +26,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -40,6 +44,10 @@ public class HomeActivity extends AppCompatActivity {
     private CategoryAdapter categoryAdapter;
     private List<Product> productList = new ArrayList<>();
     private static final String PRODUCT_URL = "http://10.0.2.2:3000/products";
+
+    // Inverted Index cho tìm kiếm
+    private Map<String, Set<Integer>> invertedIndex = new HashMap<>();
+    private static final Set<String> STOP_WORDS = new HashSet<>(List.of("là", "và", "cái", "ở", "với"));
 
     // Banner
     private ViewPager2 bannerViewPager;
@@ -64,7 +72,7 @@ public class HomeActivity extends AppCompatActivity {
         rvCategories = findViewById(R.id.rv_categories);
         rvProducts = findViewById(R.id.rv_products);
         bannerViewPager = findViewById(R.id.bannerViewPager);
-        nestedScrollView = findViewById(R.id.nested_scroll_view); // Cần thêm ID này vào layout
+        nestedScrollView = findViewById(R.id.nested_scroll_view);
 
         // Bottom buttons
         btnHome = findViewById(R.id.btn_home);
@@ -92,11 +100,15 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Tìm kiếm
+        // Tìm kiếm nâng cao
         etSearch.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 String query = etSearch.getText().toString().trim().toLowerCase();
-                filterProductsBySearch(query);
+                if (!query.isEmpty()) {
+                    filterProductsByFullTextSearch(query);
+                } else {
+                    productAdapter.updateList(productList); // Hiển thị tất cả nếu không nhập
+                }
                 return true;
             }
             return false;
@@ -104,9 +116,8 @@ public class HomeActivity extends AppCompatActivity {
 
         // Sự kiện bottom buttons
         btnHome.setOnClickListener(v -> {
-            // Reload đầu trang: Scroll lên đầu NestedScrollView
             if (nestedScrollView != null) {
-                nestedScrollView.smoothScrollTo(0, 0); // Scroll lên đầu trang
+                nestedScrollView.smoothScrollTo(0, 0);
             }
             Toast.makeText(this, "Đã load lại đầu trang", Toast.LENGTH_SHORT).show();
         });
@@ -117,7 +128,6 @@ public class HomeActivity extends AppCompatActivity {
         });
 
         btnLogout.setOnClickListener(v -> {
-            // Xử lý đăng xuất
             SharedPreferences prefsLogout = getSharedPreferences("user_data", MODE_PRIVATE);
             SharedPreferences.Editor editor = prefsLogout.edit();
             editor.clear();
@@ -159,7 +169,6 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void setupBannerSlider() {
-        // danh sách banner thật
         banners = new ArrayList<>();
         banners.add(R.drawable.banner1);
         banners.add(R.drawable.banner2);
@@ -172,12 +181,10 @@ public class HomeActivity extends AppCompatActivity {
         BannerAdapter bannerAdapter = new BannerAdapter(banners);
         bannerViewPager.setAdapter(bannerAdapter);
 
-        // Carousel look: show edges
         bannerViewPager.setOffscreenPageLimit(3);
         bannerViewPager.setClipToPadding(false);
         bannerViewPager.setClipChildren(false);
 
-        // add margin + transformer (Composite)
         androidx.viewpager2.widget.ViewPager2.PageTransformer transformer =
                 (page, position) -> {
                     float r = 1 - Math.abs(position);
@@ -185,33 +192,25 @@ public class HomeActivity extends AppCompatActivity {
                     page.setScaleY(scale);
                     page.setAlpha(0.5f + r * 0.5f);
                 };
-        // dùng CompositePageTransformer để thêm margin nếu muốn
         androidx.viewpager2.widget.CompositePageTransformer composite = new androidx.viewpager2.widget.CompositePageTransformer();
-
-        // Instead use MarginPageTransformer:
         composite.addTransformer(new androidx.viewpager2.widget.MarginPageTransformer(30));
         composite.addTransformer(transformer);
         bannerViewPager.setPageTransformer(composite);
 
-        // Set start position tại "giữa" sao cho modulo đúng
         int startPos = Integer.MAX_VALUE / 2;
         startPos = startPos - (startPos % banners.size());
         bannerViewPager.setCurrentItem(startPos, false);
 
-        // Auto-slide: sử dụng currentItem + 1 (không cần wrap thủ công)
         bannerRunnable = () -> {
             if (bannerViewPager.getAdapter() == null) return;
             int next = bannerViewPager.getCurrentItem() + 1;
             bannerViewPager.setCurrentItem(next, true);
-            // post lại
             bannerHandler.postDelayed(bannerRunnable, 3000);
         };
 
-        // start auto
         bannerHandler.removeCallbacks(bannerRunnable);
         bannerHandler.postDelayed(bannerRunnable, 3000);
 
-        // dừng auto khi user drag, resume khi idle
         bannerViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageScrollStateChanged(int state) {
@@ -242,6 +241,7 @@ public class HomeActivity extends AppCompatActivity {
                                     obj.optString("description", "Không có mô tả")
                             );
                             productList.add(product);
+                            buildInvertedIndex(product); // Xây dựng Inverted Index
                         }
                         productAdapter.updateList(productList);
                         productAdapter.setOnItemClickListener(product -> {
@@ -267,20 +267,46 @@ public class HomeActivity extends AppCompatActivity {
         Volley.newRequestQueue(this).add(request);
     }
 
+    private void buildInvertedIndex(Product product) {
+        int productId = product.getProductId();
+        String[] tokens = tokenize(product.getProductName());
+        for (String token : tokens) {
+            if (!STOP_WORDS.contains(token)) {
+                invertedIndex.computeIfAbsent(token, k -> new HashSet<>()).add(productId);
+            }
+        }
+    }
+
+    private String[] tokenize(String text) {
+        return text.toLowerCase().split("\\s+"); // Cắt từ bằng khoảng trắng
+    }
+
+    private void filterProductsByFullTextSearch(String query) {
+        String[] queryTokens = tokenize(query);
+        Set<Integer> relevantProductIds = new HashSet<>();
+        for (String token : queryTokens) {
+            if (invertedIndex.containsKey(token)) {
+                if (relevantProductIds.isEmpty()) {
+                    relevantProductIds.addAll(invertedIndex.get(token));
+                } else {
+                    relevantProductIds.retainAll(invertedIndex.get(token)); // Giao nhau
+                }
+            }
+        }
+
+        List<Product> filteredProducts = new ArrayList<>();
+        for (Product product : productList) {
+            if (relevantProductIds.contains(product.getProductId())) {
+                filteredProducts.add(product);
+            }
+        }
+        productAdapter.updateList(filteredProducts); // Hiển thị sản phẩm có tên giống
+    }
+
     private void filterProductsByCategory(String category) {
         List<Product> filtered = new ArrayList<>();
         for (Product p : productList) {
             if (p.getCategory().equalsIgnoreCase(category)) {
-                filtered.add(p);
-            }
-        }
-        productAdapter.updateList(filtered);
-    }
-
-    private void filterProductsBySearch(String query) {
-        List<Product> filtered = new ArrayList<>();
-        for (Product p : productList) {
-            if (p.getProductName().toLowerCase().contains(query)) {
                 filtered.add(p);
             }
         }

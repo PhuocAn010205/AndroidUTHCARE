@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,10 +17,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-
+import android.content.Intent;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,6 +43,14 @@ public class OrdersActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_orders);
+
+        // Ánh xạ nút Back
+        ImageButton btnBack = findViewById(R.id.btn_back);
+        btnBack.setOnClickListener(v -> {
+            Intent intent = new Intent(OrdersActivity.this, HomeActivity.class);
+            startActivity(intent);
+            finish();
+        });
 
         rvOrders = findViewById(R.id.rv_orders);
         rvOrders.setLayoutManager(new LinearLayoutManager(this));
@@ -112,7 +123,7 @@ public class OrdersActivity extends AppCompatActivity {
                 },
                 error -> {
                     Log.e(TAG, "Error loading orders", error);
-                    Toast.makeText(this, "Không thể tải đơn hàng", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Không thể tải đơn hàng. Vui lòng kiểm tra kết nối server.", Toast.LENGTH_SHORT).show();
                 }
         );
         Volley.newRequestQueue(this).add(request);
@@ -143,6 +154,7 @@ public class OrdersActivity extends AppCompatActivity {
             jsonBody.put("shipping_address", newAddress);
         } catch (JSONException e) {
             Log.e(TAG, "Error creating JSON", e);
+            Toast.makeText(this, "Lỗi định dạng dữ liệu", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -151,12 +163,26 @@ public class OrdersActivity extends AppCompatActivity {
                 UPDATE_ADDRESS_URL + orderId + "/update-address",
                 jsonBody,
                 response -> {
-                    Toast.makeText(this, "Cập nhật địa chỉ thành công", Toast.LENGTH_SHORT).show();
-                    loadOrders(getSharedPreferences("user_data", MODE_PRIVATE).getInt("user_id", -1));
+                    try {
+                        String message = response.getString("message");
+                        if ("Cập nhật địa chỉ thành công".equals(message)) {
+                            Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+                            loadOrders(getSharedPreferences("user_data", MODE_PRIVATE).getInt("user_id", -1));
+                        } else {
+                            Toast.makeText(this, "Phản hồi không mong muốn từ server", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (JSONException e) {
+                        Log.e(TAG, "Error parsing response", e);
+                        Toast.makeText(this, "Lỗi xử lý phản hồi từ server", Toast.LENGTH_SHORT).show();
+                    }
                 },
                 error -> {
                     Log.e(TAG, "Error updating address", error);
-                    Toast.makeText(this, "Lỗi cập nhật địa chỉ", Toast.LENGTH_SHORT).show();
+                    if (error.networkResponse != null && error.networkResponse.statusCode == 404) {
+                        Toast.makeText(this, "Chức năng chỉnh sửa địa chỉ chưa được hỗ trợ. Vui lòng liên hệ quản trị viên để thêm route.", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "Lỗi kết nối server. Vui lòng thử lại sau.", Toast.LENGTH_LONG).show();
+                    }
                 }
         );
         Volley.newRequestQueue(this).add(request);
@@ -177,12 +203,22 @@ public class OrdersActivity extends AppCompatActivity {
                 CANCEL_ORDER_URL + orderId + "/cancel",
                 null,
                 response -> {
-                    Toast.makeText(this, "Hủy đơn hàng thành công", Toast.LENGTH_SHORT).show();
-                    loadOrders(getSharedPreferences("user_data", MODE_PRIVATE).getInt("user_id", -1));
+                    try {
+                        String message = response.getString("message");
+                        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+                        loadOrders(getSharedPreferences("user_data", MODE_PRIVATE).getInt("user_id", -1));
+                    } catch (JSONException e) {
+                        Log.e(TAG, "Error parsing response", e);
+                        Toast.makeText(this, "Lỗi xử lý phản hồi từ server", Toast.LENGTH_SHORT).show();
+                    }
                 },
                 error -> {
                     Log.e(TAG, "Error canceling order", error);
-                    Toast.makeText(this, "Lỗi hủy đơn hàng", Toast.LENGTH_SHORT).show();
+                    if (error.networkResponse != null && error.networkResponse.statusCode == 404) {
+                        Toast.makeText(this, "Chức năng hủy đơn chưa được hỗ trợ. Vui lòng liên hệ quản trị viên.", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(this, "Lỗi kết nối server. Vui lòng thử lại sau.", Toast.LENGTH_LONG).show();
+                    }
                 }
         );
         Volley.newRequestQueue(this).add(request);
