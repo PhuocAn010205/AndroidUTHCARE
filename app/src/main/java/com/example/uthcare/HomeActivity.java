@@ -143,7 +143,7 @@ public class HomeActivity extends AppCompatActivity {
     private void setupCategoryRecycler() {
         rvCategories.setLayoutManager(new GridLayoutManager(this, 3));
         List<Category> categories = new ArrayList<>();
-        categories.add(new Category("Tất cả", R.drawable.ic_home));
+        categories.add(new Category("Tất cả", R.drawable.ic_list));
         categories.add(new Category("Thuốc", R.drawable.ic_medicine));
         categories.add(new Category("Thực phẩm bảo vệ sức khỏe", R.drawable.ic_menu_info_details));
         categories.add(new Category("Chăm sóc cá nhân", R.drawable.ic_personal_care));
